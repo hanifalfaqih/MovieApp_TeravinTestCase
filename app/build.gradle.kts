@@ -1,7 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("kotlin-kapt")
+    id("com.google.devtools.ksp")
 }
 
 android {
@@ -78,8 +78,7 @@ dependencies {
 
     // Room
     implementation ("androidx.room:room-runtime:2.5.2")
-    //noinspection KaptUsageInsteadOfKsp
-    kapt("androidx.room:room-compiler:2.5.2")
+    ksp("androidx.room:room-compiler:2.5.2")
     implementation ("androidx.room:room-ktx:2.5.2")
 
     // Work Manager
