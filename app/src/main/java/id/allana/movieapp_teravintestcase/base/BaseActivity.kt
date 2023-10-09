@@ -1,9 +1,7 @@
 package id.allana.movieapp_teravintestcase.base
 
 import android.os.Bundle
-import android.os.PersistableBundle
 import android.view.LayoutInflater
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModel
 import androidx.viewbinding.ViewBinding
@@ -35,4 +33,6 @@ abstract class BaseActivity<B: ViewBinding, VM: ViewModel>(
     override fun showContent(isVisible: Boolean) {}
 
     override fun showError(isError: Boolean, messageError: String?) {}
+
+    override fun showLoading(isLoading: Boolean) {}
 }
