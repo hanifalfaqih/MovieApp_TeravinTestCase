@@ -18,7 +18,10 @@ import id.allana.movieapp_teravintestcase.data.local.MovieEntity
 import id.allana.movieapp_teravintestcase.data.local.datasource.LocalMovieDataSourceImpl
 import id.allana.movieapp_teravintestcase.data.network.ApiConfig
 import id.allana.movieapp_teravintestcase.data.network.datasource.MovieDataSourceImpl
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class MovieUpdateDataTask : BroadcastReceiver() {
@@ -35,13 +38,19 @@ class MovieUpdateDataTask : BroadcastReceiver() {
 
             }
         }
+
+        val coroutineScope = CoroutineScope(Dispatchers.IO)
+        coroutineScope.launch {
+            setRepeatingUpdateData(context)
+        }
     }
 
     suspend fun setRepeatingUpdateData(context: Context) {
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+
         val localMovieDataSource = LocalMovieDataSourceImpl(MovieDatabase.getDatabase(context).movieDao())
         val movieDataSource = MovieDataSourceImpl(ApiConfig.getApiService())
 
-        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val movieResponse = withContext(Dispatchers.IO) {
             movieDataSource.getDiscoverMovie()
         }
@@ -50,19 +59,30 @@ class MovieUpdateDataTask : BroadcastReceiver() {
         val listMovieEntity = listMovieResponse.map {
             MovieEntity(it.id, it.overview, it.title, it.releaseDate)
         }
+
         /**
          * Delete old data first
          */
-        val oldListMovieData = localMovieDataSource.getAllDiscoveryMoviesFromLocal()
-        Log.d(MovieUpdateDataTask::class.simpleName, "Data lama -> ${oldListMovieData.value.toString()}")
+        val oldListMovieData = withContext(Dispatchers.IO) {
+            localMovieDataSource.getAllDiscoveryMoviesFromLocal()
+        }
         oldListMovieData.value?.let { localMovieDataSource.deleteAllDiscoveryMoviesFromLocal(it) }
 
         /**
          * Replace with new data
          */
-        localMovieDataSource.insertAllDiscoveryMovies(listMovieEntity).also {
-            Log.d(MovieUpdateDataTask::class.java.simpleName, "Data baru -> ${localMovieDataSource.getAllDiscoveryMoviesFromLocal().value.toString()}")
+        withContext(Dispatchers.IO) {
+            localMovieDataSource.insertAllDiscoveryMovies(listMovieEntity)
         }
+        /**
+         * Replace with new data
+         */
+        withContext(Dispatchers.IO) {
+            localMovieDataSource.insertAllDiscoveryMovies(listMovieEntity)
+            Log.d(MovieUpdateDataTask::class.simpleName, "Data baru -> ${localMovieDataSource.getAllDiscoveryMoviesFromLocal().value.toString()}")
+        }
+
+        delay(1000)
 
         val intentBeforeStartTask = Intent(context, MovieUpdateDataTask::class.java)
             .setAction(ACTION_NOTIFY_BEFORE_START)
