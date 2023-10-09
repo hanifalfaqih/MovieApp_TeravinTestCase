@@ -3,18 +3,17 @@ package id.allana.movieapp_teravintestcase.ui.listmovie.adapter
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import coil.load
-import id.allana.movieapp_teravintestcase.BuildConfig
+import id.allana.movieapp_teravintestcase.data.local.MovieEntity
 import id.allana.movieapp_teravintestcase.data.network.model.Movie
 import id.allana.movieapp_teravintestcase.databinding.ItemMovieBinding
 
-class ListMovieAdapter: RecyclerView.Adapter<ListMovieAdapter.ListMovieViewHolder>() {
+class ListMovieNetworkAdapter: RecyclerView.Adapter<ListMovieNetworkAdapter.ListMovieViewHolder>() {
 
-    private var items: MutableList<Movie> = mutableListOf()
+    private var itemsNetwork: MutableList<Movie> = mutableListOf()
 
     fun setItems(data: List<Movie>) {
-        items.clear()
-        items.addAll(data)
+        itemsNetwork.clear()
+        itemsNetwork.addAll(data)
     }
 
     class ListMovieViewHolder(private val binding: ItemMovieBinding): RecyclerView.ViewHolder(binding.root) {
@@ -25,8 +24,6 @@ class ListMovieAdapter: RecyclerView.Adapter<ListMovieAdapter.ListMovieViewHolde
                     tvMovieOverview.text = overview
                     tvMovieDateRelease.text = releaseDate
                     tvMovieOverview.text = overview
-
-                    sivMoviePoster.load("${BuildConfig.BASE_URL_PHOTO}${posterPath}")
                 }
             }
         }
@@ -37,9 +34,9 @@ class ListMovieAdapter: RecyclerView.Adapter<ListMovieAdapter.ListMovieViewHolde
         return ListMovieViewHolder(binding)
     }
 
-    override fun getItemCount(): Int = items.size
+    override fun getItemCount(): Int = itemsNetwork.size
 
     override fun onBindViewHolder(holder: ListMovieViewHolder, position: Int) {
-        holder.bindView(items[position])
+        holder.bindView(itemsNetwork[position])
     }
 }

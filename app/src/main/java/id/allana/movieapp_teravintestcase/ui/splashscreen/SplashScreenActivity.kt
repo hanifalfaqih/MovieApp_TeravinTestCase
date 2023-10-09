@@ -47,6 +47,9 @@ class SplashScreenActivity : BaseActivity<ActivitySplashScreenBinding, SplashScr
         getViewModel().isLocalDataAvailableLiveData().observe(this) { isEmpty ->
             getViewModel().connectionStatusLiveData().observe(this) { isConnected ->
                 Log.d(SplashScreenActivity::class.simpleName, "isEmpty $isEmpty and isConnected $isConnected")
+                /**
+                 * To check if empty data is true and connection is false
+                 */
                 if (isEmpty && !isConnected) {
                     showAlertDialog()
                 } else {
