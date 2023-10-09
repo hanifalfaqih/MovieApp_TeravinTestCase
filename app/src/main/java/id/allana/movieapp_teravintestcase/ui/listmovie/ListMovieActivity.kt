@@ -5,30 +5,24 @@ import android.os.Build
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.isVisible
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.work.Constraints
-import androidx.work.NetworkType
-import androidx.work.PeriodicWorkRequest
-import androidx.work.WorkInfo
-import androidx.work.WorkManager
-import com.google.android.material.snackbar.Snackbar
 import id.allana.movieapp_teravintestcase.base.BaseActivity
 import id.allana.movieapp_teravintestcase.base.GenericViewModelFactory
 import id.allana.movieapp_teravintestcase.base.Resource
 import id.allana.movieapp_teravintestcase.data.network.ApiConfig
 import id.allana.movieapp_teravintestcase.data.network.datasource.MovieDataSourceImpl
 import id.allana.movieapp_teravintestcase.data.network.model.Movie
-import id.allana.movieapp_teravintestcase.data.network.service.MovieWorker
+import id.allana.movieapp_teravintestcase.data.network.service.MovieUpdateDataTask
 import id.allana.movieapp_teravintestcase.databinding.ActivityListMovieBinding
 import id.allana.movieapp_teravintestcase.ui.listmovie.adapter.ListMovieAdapter
-import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.launch
 
 class ListMovieActivity : BaseActivity<ActivityListMovieBinding, ListMovieViewModel>(
     ActivityListMovieBinding::inflate
 ), ListMovieContract.View {
 
-    private lateinit var workManager: WorkManager
-    private lateinit var periodicWorkRequest: PeriodicWorkRequest
+    private lateinit var movieUpdateDataTask: MovieUpdateDataTask
 
     private val adapter: ListMovieAdapter by lazy {
         ListMovieAdapter()
@@ -42,31 +36,17 @@ class ListMovieActivity : BaseActivity<ActivityListMovieBinding, ListMovieViewMo
     }
 
     override fun initView() {
-        initMovieWorker()
+        setRepeatingUpdate()
         requestPermission()
         getData()
         setupRecyclerView()
     }
 
-    override fun initMovieWorker() {
-        workManager = WorkManager.getInstance(this)
-        setPeriodicTask()
-    }
-
-    override fun setPeriodicTask() {
-        val constraints = Constraints.Builder()
-            .setRequiredNetworkType(NetworkType.CONNECTED)
-            .build()
-        periodicWorkRequest = PeriodicWorkRequest.Builder(MovieWorker::class.java, 15, TimeUnit.MINUTES)
-            .setConstraints(constraints)
-            .build()
-        workManager.enqueue(periodicWorkRequest)
-        workManager.getWorkInfoByIdLiveData(periodicWorkRequest.id)
-            .observe(this@ListMovieActivity) { workInfo ->
-                if (workInfo.state == WorkInfo.State.SUCCEEDED) {
-                    Snackbar.make(findViewById(android.R.id.content), "Data berhasil diperbarui", Snackbar.LENGTH_SHORT).show()
-                }
-            }
+    override fun setRepeatingUpdate() {
+        movieUpdateDataTask = MovieUpdateDataTask()
+        lifecycleScope.launch {
+            movieUpdateDataTask.setRepeatingUpdateData(this@ListMovieActivity)
+        }
     }
 
     override fun requestPermission() {
@@ -82,7 +62,6 @@ class ListMovieActivity : BaseActivity<ActivityListMovieBinding, ListMovieViewMo
     override fun initViewModel(): ListMovieViewModel {
         val movieDataSource = MovieDataSourceImpl(ApiConfig.getApiService())
         val repository = ListMovieRepository(movieDataSource)
-        ListMovieViewModel(repository)
         return GenericViewModelFactory(ListMovieViewModel(repository)).create(ListMovieViewModel::class.java)
     }
 

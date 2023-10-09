@@ -8,8 +8,7 @@ import id.allana.movieapp_teravintestcase.data.network.model.ResponseDiscoveryMo
 
 interface ListMovieContract {
     interface View : BaseContract.BaseView {
-        fun initMovieWorker()
-        fun setPeriodicTask()
+        fun setRepeatingUpdate()
         fun requestPermission()
         fun getData()
         fun setupRecyclerView()
