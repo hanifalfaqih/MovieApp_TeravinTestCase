@@ -18,6 +18,7 @@ import id.allana.movieapp_teravintestcase.data.local.MovieEntity
 import id.allana.movieapp_teravintestcase.data.local.datasource.LocalMovieDataSourceImpl
 import id.allana.movieapp_teravintestcase.data.network.ApiConfig
 import id.allana.movieapp_teravintestcase.data.network.datasource.MovieDataSourceImpl
+import id.allana.movieapp_teravintestcase.util.checkConnection
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -27,27 +28,38 @@ class MovieUpdateDataTask : BroadcastReceiver() {
     @RequiresApi(Build.VERSION_CODES.M)
     override fun onReceive(context: Context, intent: Intent) {
         // This method is called when the BroadcastReceiver is receiving an Intent broadcast.
-        when (intent.action) {
-            ACTION_NOTIFY_AFTER_FINISH -> {
-                showNotification(context, "Data Diperbarui", "Data pada penyimpanan lokal berhasil diperbarui")
+        if (checkConnection(context)) {
+            when (intent.action) {
+                ACTION_NOTIFY_AFTER_FINISH -> {
+                    showNotification(
+                        context,
+                        "Data Diperbarui",
+                        "Data pada penyimpanan lokal berhasil diperbarui"
+                    )
 
+                }
+
+                ACTION_NOTIFY_BEFORE_START -> {
+                    showNotificationTemporary(
+                        context,
+                        "Data Baru Tersedia",
+                        "Data terbaru sudah tersedia"
+                    )
+
+                }
             }
-            ACTION_NOTIFY_BEFORE_START -> {
-                showNotificationTemporary(context, "Data Baru Tersedia", "Data terbaru sudah tersedia")
 
+            CoroutineScope(Dispatchers.IO).launch {
+                setRepeatingUpdateData(context)
             }
-        }
-
-        val coroutineScope = CoroutineScope(Dispatchers.IO)
-        coroutineScope.launch {
-            setRepeatingUpdateData(context)
         }
     }
 
     suspend fun setRepeatingUpdateData(context: Context) {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
-        val localMovieDataSource = LocalMovieDataSourceImpl(MovieDatabase.getDatabase(context).movieDao())
+        val localMovieDataSource =
+            LocalMovieDataSourceImpl(MovieDatabase.getDatabase(context).movieDao())
         val movieDataSource = MovieDataSourceImpl(ApiConfig.getApiService())
 
         val movieResponse = withContext(Dispatchers.IO) {
@@ -63,10 +75,12 @@ class MovieUpdateDataTask : BroadcastReceiver() {
          * Delete old data first
          */
         val oldListMovieData = localMovieDataSource.getAllDiscoveryMoviesFromLocal()
-        Log.d(MovieUpdateDataTask::class.simpleName, "Data baru -> ${localMovieDataSource.getAllDiscoveryMoviesFromLocal().value.toString()}")
-
         withContext(Dispatchers.IO) {
-            oldListMovieData.value?.let { localMovieDataSource.deleteAllDiscoveryMoviesFromLocal(it) }
+            oldListMovieData.value?.let {
+                Log.d("Caching Data", "BERHASIL MENGHAPUS CACHING DATA")
+                localMovieDataSource.deleteAllDiscoveryMoviesFromLocal(it)
+            }
+            Log.d("Caching Data", "CACHING DATA MASIH NULL")
         }
 
         /**
@@ -74,6 +88,7 @@ class MovieUpdateDataTask : BroadcastReceiver() {
          */
         withContext(Dispatchers.IO) {
             localMovieDataSource.insertAllDiscoveryMovies(listMovieEntity)
+            Log.d("Caching Data", "BERHASIL MELAKUKAN CACHING DATA")
         }
 
         val intentBeforeStartTask = Intent(context, MovieUpdateDataTask::class.java)
@@ -93,7 +108,8 @@ class MovieUpdateDataTask : BroadcastReceiver() {
         )
 
         val intentAfterFinishTask = Intent(context, MovieUpdateDataTask::class.java).setAction(
-            ACTION_NOTIFY_AFTER_FINISH)
+            ACTION_NOTIFY_AFTER_FINISH
+        )
         val afterFinishTaskPendingIntent =
             PendingIntent.getBroadcast(
                 context,
@@ -112,7 +128,8 @@ class MovieUpdateDataTask : BroadcastReceiver() {
 
 
     private fun showNotification(context: Context, title: String, description: String) {
-        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val notification = NotificationCompat.Builder(context, CHANNEL_NOTIFY_SUCCESS)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title)
@@ -122,7 +139,8 @@ class MovieUpdateDataTask : BroadcastReceiver() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_NOTIFY_SUCCESS,
-                CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT)
+                CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT
+            )
             notification.setChannelId(CHANNEL_NOTIFY_SUCCESS)
             notificationManager.createNotificationChannel(channel)
         }
@@ -130,7 +148,8 @@ class MovieUpdateDataTask : BroadcastReceiver() {
     }
 
     private fun showNotificationTemporary(context: Context, title: String, description: String) {
-        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val notification = NotificationCompat.Builder(context, CHANNEL_NOTIFY_PRESTART)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title)
@@ -141,7 +160,8 @@ class MovieUpdateDataTask : BroadcastReceiver() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_NOTIFY_PRESTART,
-                CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT)
+                CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT
+            )
             notification.setChannelId(CHANNEL_NOTIFY_PRESTART)
             notificationManager.createNotificationChannel(channel)
         }
