@@ -9,9 +9,7 @@ class LocalMovieDataSourceImpl(private val movieDao: MovieDao): LocalMovieDataSo
         return movieDao.getAllDiscoveryMoviesFromLocal()
     }
 
-    override suspend fun deleteAllDiscoveryMoviesFromLocal(listMovie: List<MovieEntity>) {
-        return movieDao.deleteAllMoviesFromLocal(listMovie)
-    }
+    override suspend fun deleteAllDiscoveryMoviesFromLocal() =  movieDao.deleteAllMoviesFromLocal()
 
     override suspend fun insertAllDiscoveryMovies(listMovie: List<MovieEntity>) {
         return movieDao.insertAllDiscoveryMovies(listMovie)

@@ -10,6 +10,6 @@ import id.allana.movieapp_teravintestcase.data.network.model.Movie
 interface LocalMovieDataSource {
 
     fun getAllDiscoveryMoviesFromLocal(): LiveData<List<MovieEntity>>
-    suspend fun deleteAllDiscoveryMoviesFromLocal(listMovie: List<MovieEntity>)
+    suspend fun deleteAllDiscoveryMoviesFromLocal()
     suspend fun insertAllDiscoveryMovies(listMovie: List<MovieEntity>)
 }

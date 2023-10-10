@@ -74,14 +74,7 @@ class MovieUpdateDataTask : BroadcastReceiver() {
         /**
          * Delete old data first
          */
-        val oldListMovieData = localMovieDataSource.getAllDiscoveryMoviesFromLocal()
-        withContext(Dispatchers.IO) {
-            oldListMovieData.value?.let {
-                Log.d("Caching Data", "BERHASIL MENGHAPUS CACHING DATA")
-                localMovieDataSource.deleteAllDiscoveryMoviesFromLocal(it)
-            }
-            Log.d("Caching Data", "CACHING DATA MASIH NULL")
-        }
+        localMovieDataSource.deleteAllDiscoveryMoviesFromLocal()
 
         /**
          * Replace with new data
