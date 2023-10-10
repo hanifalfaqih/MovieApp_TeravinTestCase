@@ -13,8 +13,8 @@ interface MovieDao {
     @Query("SELECT * FROM movie_table")
     fun getAllDiscoveryMoviesFromLocal(): LiveData<List<MovieEntity>>
 
-    @Delete
-    suspend fun deleteAllMoviesFromLocal(listMovie: List<MovieEntity>)
+    @Query("DELETE FROM movie_table")
+    suspend fun deleteAllMoviesFromLocal()
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAllDiscoveryMovies(listMovie: List<MovieEntity>)
